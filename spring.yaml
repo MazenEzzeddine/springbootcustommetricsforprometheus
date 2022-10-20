@@ -1,0 +1,47 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    app: strimzi
+  name: springg
+spec:
+  restartPolicy: Never
+  containers:
+    - name: springcontainer
+      image: docker.io/mezzeddine/springg:v0
+      ports:
+        - containerPort: 8080
+          name: brom
+---
+  apiVersion: v1
+  kind: Service
+  metadata:
+    name: springserviceinside
+    labels:
+      app: strimzi
+  spec:
+    selector:
+      app: strimzi
+    ports:
+      - port: 80
+        name: metrics
+        targetPort: 8080
+    type: ClusterIP
+---
+  apiVersion: monitoring.coreos.com/v1
+  kind: PodMonitor
+  metadata:
+    name: springmonitor
+    labels:
+      app: strimzi
+  spec:
+    selector:
+      matchLabels:
+        app: strimzi
+    namespaceSelector:
+      matchNames:
+        - default
+    podMetricsEndpoints:
+    - path: /actuator/prometheus
+      port: brom
+      interval: 5s
